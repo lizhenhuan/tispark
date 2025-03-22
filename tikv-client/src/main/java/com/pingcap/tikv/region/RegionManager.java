@@ -56,7 +56,7 @@ public class RegionManager {
   // To avoid double retrieval, we used the async version of grpc
   // When rpc not returned, instead of call again, it wait for previous one done
   public RegionManager(
-      ReadOnlyPDClient pdClient, Function<CacheInvalidateEvent, Void> cacheInvalidateCallback) {
+          ReadOnlyPDClient pdClient, Function<CacheInvalidateEvent, Void> cacheInvalidateCallback) {
     this.cache = new RegionCache(pdClient);
     this.cacheInvalidateCallback = cacheInvalidateCallback;
   }
@@ -67,7 +67,7 @@ public class RegionManager {
   }
 
   public synchronized void setCacheInvalidateCallback(
-      Function<CacheInvalidateEvent, Void> cacheInvalidateCallback) {
+          Function<CacheInvalidateEvent, Void> cacheInvalidateCallback) {
     this.cacheInvalidateCallback = cacheInvalidateCallback;
   }
 
@@ -100,7 +100,7 @@ public class RegionManager {
   }
 
   public Pair<TiRegion, Store> getRegionStorePairByKey(
-      ByteString key, TiStoreType storeType, BackOffer backOffer) {
+          ByteString key, TiStoreType storeType, BackOffer backOffer) {
     TiRegion region = cache.getRegionByKey(key, backOffer);
     if (region == null) {
       throw new TiClientInternalException("Region not exist for key:" + formatBytesUTF8(key));
@@ -119,7 +119,7 @@ public class RegionManager {
         Store s = getStoreById(peer.getStoreId(), backOffer);
         for (Metapb.StoreLabel label : s.getLabelsList()) {
           if (label.getKey().equals(storeType.getLabelKey())
-              && label.getValue().equals(storeType.getLabelValue())) {
+                  && label.getValue().equals(storeType.getLabelValue())) {
             tiflashStores.add(s);
           }
         }
@@ -128,8 +128,8 @@ public class RegionManager {
       // select a tiflash with Round-Robin strategy
       if (tiflashStores.size() > 0) {
         store =
-            tiflashStores.get(
-                Math.floorMod(tiflashStoreIndex.getAndIncrement(), tiflashStores.size()));
+                tiflashStores.get(
+                        Math.floorMod(tiflashStoreIndex.getAndIncrement(), tiflashStores.size()));
       }
 
       if (store == null) {
@@ -140,7 +140,7 @@ public class RegionManager {
 
     if (store == null) {
       throw new TiClientInternalException(
-          "Cannot find valid store on " + storeType + " for region " + region.toString());
+              "Cannot find valid store on " + storeType + " for region " + region.toString());
     }
 
     return Pair.create(region, store);
@@ -190,16 +190,12 @@ public class RegionManager {
     cache.invalidateStore(storeId);
   }
 
-  public void invalidateAllStoreAndRegion() {
-    cache.invalidateAllStoreAndRegion();
-  }
-
   public void invalidateRegion(TiRegion region) {
     cache.invalidateRegion(region);
   }
 
   public void invalidateRange(ByteString startKey, ByteString endKey) {
-    cache.invalidateRange(startKey, endKey);
+    cache.invalidateRange(startKey,endKey);
   }
 
   public static class RegionCache {
@@ -219,7 +215,7 @@ public class RegionManager {
       TiRegion region = regionCache.get(getEncodedKey(key));
       if (logger.isDebugEnabled()) {
         logger.debug(
-            String.format("getRegionByKey key[%s] -> Region[%s]", formatBytesUTF8(key), region));
+                String.format("getRegionByKey key[%s] -> Region[%s]", formatBytesUTF8(key), region));
       }
 
       if (region == null) {
@@ -267,8 +263,7 @@ public class RegionManager {
     private synchronized void invalidateRange(ByteString startKey, ByteString endKey) {
       regionCache.remove(makeRange(startKey, endKey));
       if (logger.isDebugEnabled()) {
-        logger.debug(
-            String.format("invalidateRange success, startKey[%s], endKey[%s]", startKey, endKey));
+        logger.debug(String.format("invalidateRange success, startKey[%s], endKey[%s]", startKey, endKey));
       }
     }
 
@@ -293,7 +288,6 @@ public class RegionManager {
     public synchronized void invalidateAllRegionForStore(long storeId) {
       List<TiRegion> regionToRemove = new ArrayList<>();
       for (TiRegion r : regionCache.asMapOfRanges().values()) {
-        logger.debug(String.format("clean region %d", r.getId()));
         if (r.getLeader().getStoreId() == storeId) {
           if (logger.isDebugEnabled()) {
             logger.debug(String.format("invalidateAllRegionForStore Region[%s]", r));
@@ -310,20 +304,6 @@ public class RegionManager {
 
     public synchronized void invalidateStore(long storeId) {
       storeCache.remove(storeId);
-    }
-
-    public synchronized void invalidateAllStoreAndRegion() {
-      logger.info(
-          String.format(
-              "clean all regions and stores, cache store size is %d, cache region size is %d",
-              storeCache.size(), regionCache.asMapOfRanges().size()));
-      for (Iterator<Map.Entry<Long, Store>> storeEntry = storeCache.entrySet().iterator();
-          storeEntry.hasNext(); ) {
-        Map.Entry<Long, Store> store = storeEntry.next();
-        logger.debug(String.format("clean store %d", store.getKey()));
-        invalidateAllRegionForStore(store.getKey());
-        storeEntry.remove();
-      }
     }
 
     public synchronized Store getStoreById(long id, BackOffer backOffer) {
