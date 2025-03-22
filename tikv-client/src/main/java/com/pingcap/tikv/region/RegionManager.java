@@ -56,7 +56,7 @@ public class RegionManager {
   // To avoid double retrieval, we used the async version of grpc
   // When rpc not returned, instead of call again, it wait for previous one done
   public RegionManager(
-          ReadOnlyPDClient pdClient, Function<CacheInvalidateEvent, Void> cacheInvalidateCallback) {
+      ReadOnlyPDClient pdClient, Function<CacheInvalidateEvent, Void> cacheInvalidateCallback) {
     this.cache = new RegionCache(pdClient);
     this.cacheInvalidateCallback = cacheInvalidateCallback;
   }
@@ -100,7 +100,7 @@ public class RegionManager {
   }
 
   public Pair<TiRegion, Store> getRegionStorePairByKey(
-          ByteString key, TiStoreType storeType, BackOffer backOffer) {
+      ByteString key, TiStoreType storeType, BackOffer backOffer) {
     TiRegion region = cache.getRegionByKey(key, backOffer);
     if (region == null) {
       throw new TiClientInternalException("Region not exist for key:" + formatBytesUTF8(key));
@@ -119,7 +119,7 @@ public class RegionManager {
         Store s = getStoreById(peer.getStoreId(), backOffer);
         for (Metapb.StoreLabel label : s.getLabelsList()) {
           if (label.getKey().equals(storeType.getLabelKey())
-                  && label.getValue().equals(storeType.getLabelValue())) {
+              && label.getValue().equals(storeType.getLabelValue())) {
             tiflashStores.add(s);
           }
         }
@@ -128,8 +128,8 @@ public class RegionManager {
       // select a tiflash with Round-Robin strategy
       if (tiflashStores.size() > 0) {
         store =
-                tiflashStores.get(
-                        Math.floorMod(tiflashStoreIndex.getAndIncrement(), tiflashStores.size()));
+            tiflashStores.get(
+                Math.floorMod(tiflashStoreIndex.getAndIncrement(), tiflashStores.size()));
       }
 
       if (store == null) {
@@ -140,7 +140,7 @@ public class RegionManager {
 
     if (store == null) {
       throw new TiClientInternalException(
-              "Cannot find valid store on " + storeType + " for region " + region.toString());
+          "Cannot find valid store on " + storeType + " for region " + region.toString());
     }
 
     return Pair.create(region, store);
@@ -215,7 +215,7 @@ public class RegionManager {
       TiRegion region = regionCache.get(getEncodedKey(key));
       if (logger.isDebugEnabled()) {
         logger.debug(
-                String.format("getRegionByKey key[%s] -> Region[%s]", formatBytesUTF8(key), region));
+            String.format("getRegionByKey key[%s] -> Region[%s]", formatBytesUTF8(key), region));
       }
 
       if (region == null) {
