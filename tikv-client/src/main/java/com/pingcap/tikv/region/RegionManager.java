@@ -317,13 +317,8 @@ public class RegionManager {
           String.format(
               "clean all regions and stores, cache store size is %d, cache region size is %d",
               storeCache.size(), regionCache.asMapOfRanges().size()));
-      for (Iterator<Map.Entry<Long, Store>> storeEntry = storeCache.entrySet().iterator();
-          storeEntry.hasNext(); ) {
-        Map.Entry<Long, Store> store = storeEntry.next();
-        logger.debug(String.format("clean store %d", store.getKey()));
-        invalidateAllRegionForStore(store.getKey());
-        storeEntry.remove();
-      }
+      storeCache.clear();
+      regionCache.clear();
     }
 
     public synchronized Store getStoreById(long id, BackOffer backOffer) {
